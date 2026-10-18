@@ -1,19 +1,24 @@
-const { Events } = require('discord.js');
-const store = require('../store');
-const musicPanel = require('../musicpanel');
+/**
+ * Event GuildMemberUpdate: Menangani perubahan peran (role) dan nama tampilan (nickname) member.
+ * Dipakai oleh: discord.js event loader di index.js.
+ * Bergantung pada: discord.js, features/musicbot.
+ */
 
+// --- Import Modul ---
+const { Events } = require('discord.js');
+const musicbot = require('../features/musicbot');
+
+// --- Definisi Event ---
 module.exports = {
   name: Events.GuildMemberUpdate,
+
+  /**
+   * Mengalirkan event pembaruan member ke fitur bot musik.
+   * @param {import('discord.js').GuildMember} oldMember
+   * @param {import('discord.js').GuildMember} newMember
+   */
   async execute(oldMember, newMember) {
-    const roleId = store.data.musicRoles[newMember.guild.id];
-    if (!roleId) return;
-
-    const had = oldMember.roles.cache.has(roleId);
-    const has = newMember.roles.cache.has(roleId);
-    const renamed = oldMember.displayName !== newMember.displayName;
-
-    if (had !== has || (has && renamed)) {
-      musicPanel.schedule(newMember.client, newMember.guild.id);
-    }
+    // Memeriksa dan memperbarui panel jika role bot musik bertambah/berkurang atau bot berganti nama
+    musicbot.handleGuildMemberUpdate(oldMember, newMember);
   },
 };

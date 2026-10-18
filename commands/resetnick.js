@@ -1,85 +1,130 @@
+/**
+ * Slash command untuk mereset nickname seluruh member non-bot di server (/resetnick).
+ * Dipakai oleh: discord.js command loader di index.js dan interactionCreate.
+ * Bergantung pada: discord.js (PermissionFlagsBits, SlashCommandBuilder, MessageFlags).
+ */
+
+// --- Import Modul ---
 const {
   PermissionFlagsBits,
   SlashCommandBuilder,
   MessageFlags,
 } = require('discord.js');
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const running = new Set(); // guildId yang sedang eksekusi
+// --- Konstanta ---
+const MEMBER_FETCH_CACHE_TTL_MS = 5 * 60_000; // 5 menit: hindari fetch berulang ke Discord API
+const RATE_LIMIT_DELAY_MS = 1000;              // 1 detik: jeda aman per panggilan ganti nickname
 
-const FETCH_TTL = 5 * 60_000; // 5 menit
-const fetchedAt = new Map(); // guildId -> timestamp
+// --- State Privat (Runtime) ---
+const runningGuilds = new Set();               // guildId: mencegah eksekusi ganda bersamaan di server yang sama
+const memberFetchTimestamps = new Map();       // guildId -> timestamp (ms)
 
-async function getMembers(guild) {
-  const last = fetchedAt.get(guild.id) ?? 0;
-  if (Date.now() - last > FETCH_TTL) {
+// --- Helper Privat ---
+
+/**
+ * Menghentikan eksekusi sementara selama durasi tertentu.
+ * @param {number} ms - Durasi tunda dalam milidetik.
+ * @returns {Promise<void>}
+ */
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Mengambil daftar member server dengan sistem caching untuk menghemat bandwidth & rate limit.
+ * @param {import('discord.js').Guild} guild
+ * @returns {Promise<import('discord.js').Collection<string, import('discord.js').GuildMember>>}
+ */
+async function fetchGuildMembersWithCache(guild) {
+  const lastFetched = memberFetchTimestamps.get(guild.id) ?? 0;
+  const isCacheExpired = Date.now() - lastFetched > MEMBER_FETCH_CACHE_TTL_MS;
+
+  if (isCacheExpired) {
     try {
-      await guild.members.fetch(); // fetch penuh hanya kalau cache sudah basi
-      fetchedAt.set(guild.id, Date.now());
+      // Fetch penuh hanya jika cache lokal sudah melewati masa kedaluwarsa
+      await guild.members.fetch();
+      memberFetchTimestamps.set(guild.id, Date.now());
     } catch (err) {
       if (err.name === 'GatewayRateLimitError') {
-        const detik = Math.ceil(err.data.retry_after);
-        throw new Error(`Rate limit Discord. Coba lagi dalam ${detik} detik.`);
+        const retrySeconds = Math.ceil(err.data.retry_after);
+        throw new Error(`Rate limit Discord. Coba lagi dalam ${retrySeconds} detik.`);
       }
       throw err;
     }
   }
+
   return guild.members.cache;
 }
 
-module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('resetnick')
-    .setDescription('Reset nickname semua member')
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageNicknames)
-    .setDMPermission(false),
+// --- Definisi Command Data ---
+const data = new SlashCommandBuilder()
+  .setName('resetnick')
+  .setDescription('Reset nickname semua member')
+  .setDefaultMemberPermissions(PermissionFlagsBits.ManageNicknames)
+  .setDMPermission(false);
 
-  async execute(interaction) {
-    const { guild, user } = interaction;
+// --- Eksekusi Interaksi ---
 
-    if (running.has(guild.id)) {
-      return interaction.reply({
-        content: 'Reset sedang berjalan di server ini.',
-        flags: MessageFlags.Ephemeral,
-      });
-    }
+/**
+ * Menjalankan operasi reset nickname secara bertahap.
+ * @param {import('discord.js').ChatInputCommandInteraction} interaction
+ */
+async function execute(interaction) {
+  const { guild, user } = interaction;
 
-    running.add(guild.id);
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+  // 1. Guarding: Cegah proses ganda berjalan di server yang sama
+  if (runningGuilds.has(guild.id)) {
+    return interaction.reply({
+      content: 'Reset sedang berjalan di server ini.',
+      flags: MessageFlags.Ephemeral,
+    });
+  }
 
-    let ok = 0;
-    let skip = 0;
-    try {
-      const members = await getMembers(guild);
-      const targets = members.filter((m) => !m.user.bot && m.nickname);
+  // 2. Tandai server sedang dalam proses dan tunda balasan (defer reply)
+  runningGuilds.add(guild.id);
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-      await interaction.editReply(
-        `Mereset **${targets.size}** nickname... Mohon tunggu.`
-      );
+  let successCount = 0;
+  let skippedCount = 0;
 
-      for (const member of targets.values()) {
-        if (!member.manageable) {
-          skip++;
-          continue;
-        }
-        try {
-          await member.setNickname(null, `Reset oleh ${user.tag}`);
-          ok++;
-          await sleep(1000); // hindari rate limit
-        } catch {
-          skip++;
-        }
+  try {
+    // 3. Ambil member dan saring hanya member manusia yang memiliki custom nickname
+    const members = await fetchGuildMembersWithCache(guild);
+    const targets = members.filter((member) => !member.user.bot && member.nickname);
+
+    await interaction.editReply(
+      `Mereset **${targets.size}** nickname... Mohon tunggu.`
+    );
+
+    // 4. Lakukan reset satu per satu dengan jeda aman untuk mencegah rate limit
+    for (const member of targets.values()) {
+      if (!member.manageable) {
+        skippedCount++;
+        continue;
       }
-    } finally {
-      running.delete(guild.id);
-    }
 
-    const hasil = `Selesai. Berhasil: ${ok}, dilewati: ${skip}`;
-    try {
-      await interaction.editReply(hasil);
-    } catch {
-      // token interaksi kedaluwarsa (>15 menit) pada server besar
-      await interaction.channel?.send(`${hasil} (oleh ${user})`);
+      try {
+        await member.setNickname(null, `Reset oleh ${user.tag}`);
+        successCount++;
+        await sleep(RATE_LIMIT_DELAY_MS);
+      } catch {
+        skippedCount++;
+      }
     }
-  },
+  } finally {
+    // 5. Pastikan status running selalu dibersihkan setelah selesai atau terjadi error
+    runningGuilds.delete(guild.id);
+  }
+
+  // 6. Laporkan hasil akhir eksekusi kepada user
+  const resultMessage = `Selesai. Berhasil: ${successCount}, dilewati: ${skippedCount}`;
+  try {
+    await interaction.editReply(resultMessage);
+  } catch {
+    // Fallback: Jika operasi memakan waktu >15 menit, token interaksi Discord kedaluwarsa
+    await interaction.channel?.send(`${resultMessage} (oleh ${user})`);
+  }
+}
+
+module.exports = {
+  data,
+  execute,
 };

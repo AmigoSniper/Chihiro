@@ -1,32 +1,35 @@
+/**
+ * Event VoiceStateUpdate: Menangani perubahan aktivitas member di channel voice.
+ * Dipakai oleh: discord.js event loader di index.js.
+ * Bergantung pada: discord.js, features/voicetime, features/lounge, features/musicbot.
+ */
+
+// --- Import Modul ---
 const { Events } = require('discord.js');
-const rooms = require('../rooms');
-const store = require('../store');
-const musicPanel = require('../musicpanel');
-const voicetime = require('../voicetime');
+const voicetime = require('../features/voicetime');
+const lounge = require('../features/lounge');
+const musicbot = require('../features/musicbot');
 
-function isMusicBot(state) {
-  const roleId = store.data.musicRoles[state.guild.id];
-  return !!roleId && !!state.member?.roles.cache.has(roleId);
-}
-
+// --- Definisi Event ---
 module.exports = {
   name: Events.VoiceStateUpdate,
+
+  /**
+   * Mengalirkan event pembaruan voice ke seluruh fitur yang berkepentingan.
+   * @param {import('discord.js').VoiceState} oldState
+   * @param {import('discord.js').VoiceState} newState
+   */
   async execute(oldState, newState) {
     const client = newState.client;
 
-    // Top Voice: catat waktu voice
+    // 1. Top Voice: Sinkronisasi durasi waktu aktif pada channel voice terkait
     voicetime.onUpdate(oldState, newState);
 
-    // Gaming Lounge: hapus room kosong setelah 1 menit
-    rooms.check(client, oldState.channel);
-    rooms.check(client, newState.channel);
+    // 2. Gaming Lounge: Periksa channel lama dan baru untuk auto-cleanup room kosong
+    lounge.checkRoom(client, oldState.channel);
+    lounge.checkRoom(client, newState.channel);
 
-    // Bot musik: perbarui embed kalau member ber-role bot musik pindah voice
-    if (
-      oldState.channelId !== newState.channelId &&
-      (isMusicBot(oldState) || isMusicBot(newState))
-    ) {
-      musicPanel.schedule(client, newState.guild.id);
-    }
+    // 3. Music Bot Panel: Jadwalkan pembaruan embed jika bot musik berpindah voice channel
+    musicbot.handleVoiceStateUpdate(oldState, newState);
   },
 };

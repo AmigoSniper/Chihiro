@@ -1,3 +1,9 @@
+/**
+ * Data awal (seed) kategori dan daftar game default untuk Gaming Lounge.
+ * Dipakai oleh: features/lounge/store.js saat inisialisasi awal database.
+ * Bergantung pada: tidak ada.
+ */
+
 module.exports = {
   roomPrefix: '🎮 ',
   categories: {
