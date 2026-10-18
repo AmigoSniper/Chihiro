@@ -1,0 +1,180 @@
+{
+  "roomPrefix": "🎮 ",
+  "categories": {
+    "pc": {
+      "label": "PC Game List",
+      "games": [
+        {
+          "id": "apex-legends",
+          "name": "Apex Legends",
+          "limit": 3,
+          "emoji": "<:APEXLEGEND:773766157488226354>"
+        },
+        {
+          "id": "counter-strike-2",
+          "name": "Counter-Strike 2",
+          "limit": 5,
+          "emoji": "<:CS2:1253524755445977173>"
+        },
+        {
+          "id": "dota-2",
+          "name": "Dota 2",
+          "limit": 5,
+          "emoji": "<:DOTA:773766156464160799>"
+        },
+        {
+          "id": "fortnite",
+          "name": "Fortnite",
+          "limit": 4,
+          "emoji": "<:FORTNITE:773753454014758913>"
+        },
+        {
+          "id": "gta-v",
+          "name": "GTA V",
+          "limit": 32,
+          "emoji": "<:GTS:773753407331893258>"
+        },
+        {
+          "id": "league-of-legends",
+          "name": "League of Legends",
+          "limit": 5,
+          "emoji": "<:LOL:773885248962428949>"
+        },
+        {
+          "id": "minecraft",
+          "name": "Minecraft",
+          "limit": 30,
+          "emoji": "<:MINECRAFT:773770405235654656>"
+        },
+        {
+          "id": "playerunknown-s-battlegrounds",
+          "name": "PlayerUnknown's Battlegrounds",
+          "limit": 4,
+          "emoji": "<:PUBG:773770551160209450>"
+        },
+        {
+          "id": "point-blank",
+          "name": "Point Blank",
+          "limit": 8,
+          "emoji": "<:PB:773766155487674419>"
+        },
+        {
+          "id": "rainbow-six-siege",
+          "name": "Rainbow Six Siege",
+          "limit": 5,
+          "emoji": "<:RAINBOWSIX:773751547208532000>"
+        },
+        {
+          "id": "valorant",
+          "name": "Valorant",
+          "limit": 5,
+          "emoji": "<:VALORANT:773751729388912700>"
+        }
+      ]
+    },
+    "mobile": {
+      "label": "Mobile Game List",
+      "games": [
+        {
+          "id": "among-us",
+          "name": "Among Us",
+          "limit": 15,
+          "emoji": "<:AMONGUS:773753485316718603>"
+        },
+        {
+          "id": "apex-legends-mobile",
+          "name": "Apex Legends Mobile",
+          "limit": 3,
+          "emoji": "<:APEXLEGEND:773766157488226354>"
+        },
+        {
+          "id": "arena-of-valor",
+          "name": "Arena of Valor",
+          "limit": 5,
+          "emoji": "<:AOV:773753511434649600>"
+        },
+        {
+          "id": "call-of-duty-mobile",
+          "name": "Call of Duty Mobile",
+          "limit": 5,
+          "emoji": "<:CODM:773751514463600692>"
+        },
+        {
+          "id": "free-fire",
+          "name": "Free Fire",
+          "limit": 4,
+          "emoji": "<:FREEFIRE:773751046366953484>"
+        },
+        {
+          "id": "genshin-impact",
+          "name": "Genshin Impact",
+          "limit": 4,
+          "emoji": "<:genshin:1016185712514699274>"
+        },
+        {
+          "id": "honor-of-kings",
+          "name": "Honor of Kings",
+          "limit": 5,
+          "emoji": "<:hok:1253517769450848297>"
+        },
+        {
+          "id": "lol-wild-rift",
+          "name": "LoL: Wild Rift",
+          "limit": 5,
+          "emoji": "<:LOLWildRift:773773136809295872>"
+        },
+        {
+          "id": "mobile-legends-bang-bang",
+          "name": "Mobile Legends: Bang Bang",
+          "limit": 5,
+          "emoji": "<:ML:773770451695829002>"
+        },
+        {
+          "id": "pokemon-unite",
+          "name": "Pokemon Unite",
+          "limit": 5,
+          "emoji": "<:Pokeball:1358219538688118804>"
+        },
+        {
+          "id": "pubg-mobile",
+          "name": "PUBG Mobile",
+          "limit": 4,
+          "emoji": "<:PUBGM:773751823013642250>"
+        },
+        {
+          "id": "sausage-man",
+          "name": "Sausage Man",
+          "limit": 4,
+          "emoji": "🔫"
+        },
+        {
+          "id": "stumble-guys",
+          "name": "Stumble Guys",
+          "limit": 32,
+          "emoji": "<:stumbleguys:997187035607601202>"
+        },
+        {
+          "id": "super-sus",
+          "name": "Super Sus",
+          "limit": 10,
+          "emoji": "<:SuperSUS:967389468250243082>"
+        }
+      ]
+    }
+  },
+  "panels": {
+    "644140837655019520": {
+      "channelId": "1560800374196146226",
+      "messageId": "1560851135982477484"
+    }
+  },
+  "musicRoles": {
+    "644140837655019520": "1219057429287927828"
+  },
+  "musicPanels": {
+    "644140837655019520": {
+      "channelId": "1560813999988154368",
+      "messageId": "1560856156564365424"
+    }
+  }
+}
